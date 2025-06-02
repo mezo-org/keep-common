@@ -219,7 +219,7 @@ func CreateBlockCounter(chainReader ChainReader) (*BlockCounter, error) {
 	if err != nil {
 		return nil,
 			fmt.Errorf(
-				"failed to get initial block from the chain: [%v]",
+				"failed to get initial block header from the chain: [%v]",
 				err,
 			)
 	}
