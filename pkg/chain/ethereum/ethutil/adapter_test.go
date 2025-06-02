@@ -64,55 +64,6 @@ func TestEthereumAdapter_HeaderByNumber(t *testing.T) {
 	}
 }
 
-func TestEthereumAdapter_BlockByNumber(t *testing.T) {
-	client := &mockAdaptedEthereumClient{
-		blocks: []*big.Int{
-			big.NewInt(0),
-			big.NewInt(1),
-			big.NewInt(2),
-		},
-		blocksBaseFee: []*big.Int{
-			big.NewInt(10),
-			big.NewInt(11),
-			big.NewInt(12),
-		},
-	}
-
-	adapter := &ethereumAdapter{client}
-
-	blockOne, err := adapter.BlockByNumber(context.Background(), big.NewInt(1))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	lastBlock, err := adapter.BlockByNumber(context.Background(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	expectedBlockOneNumber := big.NewInt(1)
-	if expectedBlockOneNumber.Cmp(blockOne.Number) != 0 {
-		t.Errorf(
-			"unexpected block number\n"+
-				"expected: [%v]\n"+
-				"actual:   [%v]",
-			expectedBlockOneNumber,
-			blockOne.Number,
-		)
-	}
-
-	expectedLastBlockNumber := big.NewInt(2)
-	if expectedLastBlockNumber.Cmp(lastBlock.Number) != 0 {
-		t.Errorf(
-			"unexpected last block number\n"+
-				"expected: [%v]\n"+
-				"actual:   [%v]",
-			expectedLastBlockNumber,
-			lastBlock.Number,
-		)
-	}
-}
-
 func TestEthereumAdapter_SubscribeNewHead(t *testing.T) {
 	ctx, cancelCtx := context.WithTimeout(
 		context.Background(),

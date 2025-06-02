@@ -28,22 +28,6 @@ func (ea *ethereumAdapter) HeaderByNumber(
 	}, nil
 }
 
-func (ea *ethereumAdapter) BlockByNumber(
-	ctx context.Context,
-	number *big.Int,
-) (*chainEthereum.Block, error) {
-	block, err := ea.delegate.BlockByNumber(ctx, number)
-	if err != nil {
-		return nil, err
-	}
-
-	return &chainEthereum.Block{
-		Header: &chainEthereum.Header{
-			Number: block.Number(),
-		},
-	}, nil
-}
-
 func (ea *ethereumAdapter) SubscribeNewHead(
 	ctx context.Context,
 	headersChan chan<- *chainEthereum.Header,
