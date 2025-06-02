@@ -14,6 +14,20 @@ type ethereumAdapter struct {
 	delegate EthereumClient
 }
 
+func (ea *ethereumAdapter) HeaderByNumber(
+	ctx context.Context,
+	number *big.Int,
+) (*chainEthereum.Header, error) {
+	header, err := ea.delegate.HeaderByNumber(ctx, number)
+	if err != nil {
+		return nil, err
+	}
+
+	return &chainEthereum.Header{
+		Number: header.Number,
+	}, nil
+}
+
 func (ea *ethereumAdapter) BlockByNumber(
 	ctx context.Context,
 	number *big.Int,
