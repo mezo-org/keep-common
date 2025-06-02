@@ -15,6 +15,55 @@ import (
 	chainEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 )
 
+func TestEthereumAdapter_HeaderByNumber(t *testing.T) {
+	client := &mockAdaptedEthereumClient{
+		blocks: []*big.Int{
+			big.NewInt(0),
+			big.NewInt(1),
+			big.NewInt(2),
+		},
+		blocksBaseFee: []*big.Int{
+			big.NewInt(10),
+			big.NewInt(11),
+			big.NewInt(12),
+		},
+	}
+
+	adapter := &ethereumAdapter{client}
+
+	headerOne, err := adapter.HeaderByNumber(context.Background(), big.NewInt(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	lastHeader, err := adapter.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedHeaderOneNumber := big.NewInt(1)
+	if expectedHeaderOneNumber.Cmp(headerOne.Number) != 0 {
+		t.Errorf(
+			"unexpected header number\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedHeaderOneNumber,
+			headerOne.Number,
+		)
+	}
+
+	expectedLastHeaderNumber := big.NewInt(2)
+	if expectedLastHeaderNumber.Cmp(lastHeader.Number) != 0 {
+		t.Errorf(
+			"unexpected last header number\n"+
+				"expected: [%v]\n"+
+				"actual:   [%v]",
+			expectedLastHeaderNumber,
+			lastHeader.Number,
+		)
+	}
+}
+
 func TestEthereumAdapter_BlockByNumber(t *testing.T) {
 	client := &mockAdaptedEthereumClient{
 		blocks: []*big.Int{
@@ -164,6 +213,21 @@ type mockAdaptedEthereumClient struct {
 	blocks        []*big.Int
 	blocksBaseFee []*big.Int
 	nonces        map[common.Address]uint64
+}
+
+func (maec *mockAdaptedEthereumClient) HeaderByNumber(
+	ctx context.Context,
+	number *big.Int,
+) (*types.Header, error) {
+	index := len(maec.blocks) - 1
+
+	if number != nil {
+		index = int(number.Int64())
+	}
+
+	return &types.Header{
+		Number: maec.blocks[index],
+	}, nil
 }
 
 func (maec *mockAdaptedEthereumClient) BlockByNumber(
