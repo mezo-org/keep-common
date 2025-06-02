@@ -201,12 +201,12 @@ func (bc *BlockCounter) subscribeBlocks(
 		}
 	}()
 
-	lastBlock, err := chainReader.BlockByNumber(ctx, nil)
+	lastHeader, err := chainReader.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	bc.subscriptionChannel <- block{lastBlock.Number.String()}
+	bc.subscriptionChannel <- block{lastHeader.Number.String()}
 
 	return nil
 }
@@ -215,7 +215,7 @@ func (bc *BlockCounter) subscribeBlocks(
 func CreateBlockCounter(chainReader ChainReader) (*BlockCounter, error) {
 	ctx := context.Background()
 
-	startupBlock, err := chainReader.BlockByNumber(ctx, nil)
+	startupHeader, err := chainReader.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return nil,
 			fmt.Errorf(
@@ -225,7 +225,7 @@ func CreateBlockCounter(chainReader ChainReader) (*BlockCounter, error) {
 	}
 
 	blockCounter := &BlockCounter{
-		latestBlockHeight:   startupBlock.Number.Uint64(),
+		latestBlockHeight:   startupHeader.Number.Uint64(),
 		waiters:             make(map[uint64][]chan uint64),
 		subscriptionChannel: make(chan block),
 	}
