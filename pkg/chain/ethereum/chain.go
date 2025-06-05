@@ -39,9 +39,9 @@ type Subscription interface {
 
 // ChainReader provides access to the blockchain.
 type ChainReader interface {
-	// BlockByNumber gets the block by its number. The block number argument
-	// can be nil to select the latest block.
-	BlockByNumber(ctx context.Context, number *big.Int) (*Block, error)
+	// HeaderByNumber gets the block header by its number. The block header
+	// number argument can be nil to select the latest block header.
+	HeaderByNumber(ctx context.Context, number *big.Int) (*Header, error)
 
 	// SubscribeNewHead subscribes to notifications about changes of the
 	// head block of the canonical chain.

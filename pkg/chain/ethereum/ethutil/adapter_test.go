@@ -15,7 +15,7 @@ import (
 	chainEthereum "github.com/keep-network/keep-common/pkg/chain/ethereum"
 )
 
-func TestEthereumAdapter_BlockByNumber(t *testing.T) {
+func TestEthereumAdapter_HeaderByNumber(t *testing.T) {
 	client := &mockAdaptedEthereumClient{
 		blocks: []*big.Int{
 			big.NewInt(0),
@@ -31,35 +31,35 @@ func TestEthereumAdapter_BlockByNumber(t *testing.T) {
 
 	adapter := &ethereumAdapter{client}
 
-	blockOne, err := adapter.BlockByNumber(context.Background(), big.NewInt(1))
+	headerOne, err := adapter.HeaderByNumber(context.Background(), big.NewInt(1))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	lastBlock, err := adapter.BlockByNumber(context.Background(), nil)
+	lastHeader, err := adapter.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedBlockOneNumber := big.NewInt(1)
-	if expectedBlockOneNumber.Cmp(blockOne.Number) != 0 {
+	expectedHeaderOneNumber := big.NewInt(1)
+	if expectedHeaderOneNumber.Cmp(headerOne.Number) != 0 {
 		t.Errorf(
-			"unexpected block number\n"+
+			"unexpected header number\n"+
 				"expected: [%v]\n"+
 				"actual:   [%v]",
-			expectedBlockOneNumber,
-			blockOne.Number,
+			expectedHeaderOneNumber,
+			headerOne.Number,
 		)
 	}
 
-	expectedLastBlockNumber := big.NewInt(2)
-	if expectedLastBlockNumber.Cmp(lastBlock.Number) != 0 {
+	expectedLastHeaderNumber := big.NewInt(2)
+	if expectedLastHeaderNumber.Cmp(lastHeader.Number) != 0 {
 		t.Errorf(
-			"unexpected last block number\n"+
+			"unexpected last header number\n"+
 				"expected: [%v]\n"+
 				"actual:   [%v]",
-			expectedLastBlockNumber,
-			lastBlock.Number,
+			expectedLastHeaderNumber,
+			lastHeader.Number,
 		)
 	}
 }
@@ -164,6 +164,21 @@ type mockAdaptedEthereumClient struct {
 	blocks        []*big.Int
 	blocksBaseFee []*big.Int
 	nonces        map[common.Address]uint64
+}
+
+func (maec *mockAdaptedEthereumClient) HeaderByNumber(
+	ctx context.Context,
+	number *big.Int,
+) (*types.Header, error) {
+	index := len(maec.blocks) - 1
+
+	if number != nil {
+		index = int(number.Int64())
+	}
+
+	return &types.Header{
+		Number: maec.blocks[index],
+	}, nil
 }
 
 func (maec *mockAdaptedEthereumClient) BlockByNumber(
