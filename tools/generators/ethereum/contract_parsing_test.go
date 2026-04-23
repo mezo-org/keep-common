@@ -131,7 +131,7 @@ func TestMethodStability(t *testing.T) {
 	payableMethods := make(map[string]struct{})
 	payableMethods["boop"] = struct{}{}
 
-	structs := make(map[string]struct{})
+	structs := make(map[string]*tmplStruct)
 
 	expectedConstMethodOrder := []string{"bap", "cap0", "cap1", "map"}
 	expectedNonConstMethodOrder := []string{"boop", "boop0", "map0", "nap0", "nap1", "sap"}
@@ -178,7 +178,7 @@ func TestEventStability(t *testing.T) {
 
 	expectedEventOrder := []string{"bap", "boop", "map", "sap"}
 
-	structs := make(map[string]struct{})
+	structs := make(map[string]*tmplStruct)
 
 	// Run 50 times to make sure we trigger Go's map key randomization, if
 	// applicable.
