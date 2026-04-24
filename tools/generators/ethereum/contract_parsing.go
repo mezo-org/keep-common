@@ -7,10 +7,6 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-
-	_ "unsafe"
-
-	_ "github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 // The extracted name + payability of methods from ABI JSON.
@@ -23,21 +19,6 @@ var (
 	classNameRegexp *regexp.Regexp
 	shortVarRegexp  *regexp.Regexp
 )
-
-// bindStructTypeGo resolves Go bindings for structs. It links to a non-exported
-// method of go-ethereum's bind package that is used for Go bindings generation.
-//
-//go:linkname bindStructTypeGo github.com/ethereum/go-ethereum/accounts/abi/bind.bindStructTypeGo
-func bindStructTypeGo(kind abi.Type, structs map[string]struct{}) string
-
-// bindStructTypeGo resolves Go bindings for topics. It links to a non-exported
-// method of go-ethereum's bind package that is used for Go bindings generation.
-//
-//go:linkname bindTopicTypeGo github.com/ethereum/go-ethereum/accounts/abi/bind.bindTopicTypeGo
-func bindTopicTypeGo(kind abi.Type, structs map[string]struct{}) string
-
-//go:linkname structured github.com/ethereum/go-ethereum/accounts/abi/bind.structured
-func structured(args abi.Arguments) bool
 
 func init() {
 	var err error
@@ -147,7 +128,7 @@ func buildContractInfo(
 		[]byte("-$0"),
 	)))
 
-	structs := make(map[string]struct{})
+	structs := make(map[string]*tmplStruct)
 	constMethods, nonConstMethods := buildMethodInfo(payableMethods, abi.Methods, structs)
 	events := buildEventInfo(shortVar, abi.Events, structs)
 
@@ -168,7 +149,7 @@ func buildContractInfo(
 func buildMethodInfo(
 	payableMethods map[string]struct{},
 	methodsByName map[string]abi.Method,
-	structs map[string]struct{},
+	structs map[string]*tmplStruct,
 ) (constMethods []methodInfo, nonConstMethods []methodInfo) {
 	nonConstMethods = make([]methodInfo, 0, len(methodsByName))
 	constMethods = make([]methodInfo, 0, len(methodsByName))
@@ -207,7 +188,7 @@ func buildMethodInfo(
 		cmdArgInfos := make([]cmdArgInfo, 0, 0)
 
 		for index, param := range method.Inputs {
-			goType := bindType(param.Type, structs)
+			goType := bindGoType(param.Type, structs)
 
 			var paramName string
 			if param.Name == "" {
@@ -289,7 +270,7 @@ func buildMethodInfo(
 			returned.Type = strings.Replace(normalizedName, "get", "", 1)
 
 			for index, output := range method.Outputs {
-				goType := bindType(output.Type, structs)
+				goType := bindGoType(output.Type, structs)
 
 				returned.Declarations += fmt.Sprintf(
 					"\t%v %v\n",
@@ -318,7 +299,7 @@ func buildMethodInfo(
 			returned.Multi = false
 		} else {
 			returned.Multi = false
-			returned.Type = bindType(method.Outputs[0].Type, structs)
+			returned.Type = bindGoType(method.Outputs[0].Type, structs)
 			returned.Vars += "ret,"
 		}
 
@@ -351,7 +332,7 @@ func buildMethodInfo(
 func buildEventInfo(
 	contractShortVar string,
 	eventsByName map[string]abi.Event,
-	structs map[string]struct{},
+	structs map[string]*tmplStruct,
 ) []eventInfo {
 	eventInfos := make([]eventInfo, 0, len(eventsByName))
 	for name, event := range eventsByName {
@@ -376,14 +357,14 @@ func buildEventInfo(
 		indexedFilters := ""
 		for _, param := range event.Inputs {
 			upperParam := uppercaseFirst(param.Name)
-			goType := bindType(param.Type, structs)
+			goType := bindGoType(param.Type, structs)
 
 			paramExtractors += fmt.Sprintf("event.%v,\n", upperParam)
 
 			if param.Indexed {
 				// For event's indexed parameter abigen uses dedicated type binding
 				// for topic.
-				paramDeclarations += fmt.Sprintf("%v %v,\n", upperParam, bindTopicType(param.Type, structs))
+				paramDeclarations += fmt.Sprintf("%v %v,\n", upperParam, bindGoTopicType(param.Type, structs))
 
 				indexedFilterExtractors += fmt.Sprintf("%v.%vFilter,\n", subscriptionShortVar, param.Name)
 				indexedFilterDeclarations += fmt.Sprintf("%vFilter []%v,\n", param.Name, goType)
@@ -482,14 +463,20 @@ func isMethodConstant(method abi.Method) bool {
 		method.Constant
 }
 
-// Converts solidity type to a Go type.
-func bindType(kind abi.Type, structs map[string]struct{}) string {
-	return resolveGoType(kind, bindStructTypeGo(kind, structs))
+func bindGoType(kind abi.Type, structs map[string]*tmplStruct) string {
+	if hasStruct(kind) {
+		bindStructType(kind, structs)
+	}
+
+	return resolveGoType(kind, bindType(kind, structs))
 }
 
-// Converts solidity topic type to a Go type.
-func bindTopicType(kind abi.Type, structs map[string]struct{}) string {
-	return resolveGoType(kind, bindTopicTypeGo(kind, structs))
+func bindGoTopicType(kind abi.Type, structs map[string]*tmplStruct) string {
+	if hasStruct(kind) {
+		bindStructType(kind, structs)
+	}
+
+	return resolveGoType(kind, bindTopicType(kind, structs))
 }
 
 func resolveGoType(kind abi.Type, goType string) string {
