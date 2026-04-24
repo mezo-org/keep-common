@@ -43,7 +43,7 @@ func main() {
 	flag.Parse()
 
 	if *doHelp {
-		fmt.Printf(helpText(path.Base(os.Args[0])))
+		fmt.Print(helpText(path.Base(os.Args[0])))
 		os.Exit(0)
 	}
 
@@ -58,7 +58,7 @@ func main() {
 }
 
 func errorAndExit(err string) {
-	fmt.Fprintf(os.Stderr, err+"\n\n")
+	fmt.Fprint(os.Stderr, err+"\n\n")
 	fmt.Println(helpText(path.Base(os.Args[0])))
 
 	os.Exit(1)

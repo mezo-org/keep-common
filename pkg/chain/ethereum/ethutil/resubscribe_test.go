@@ -2,6 +2,7 @@ package ethutil
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -18,7 +19,7 @@ func TestEmitOriginalError(t *testing.T) {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
 		if !failedOnce {
 			failedOnce = true
-			return nil, fmt.Errorf(expectedFailMessage)
+			return nil, errors.New(expectedFailMessage)
 		}
 		delegate := event.NewSubscription(func(unsubscribed <-chan struct{}) error {
 			return nil

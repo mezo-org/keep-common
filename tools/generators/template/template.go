@@ -77,7 +77,7 @@ func main() {
 }
 
 func errorAndExit(err string) {
-	fmt.Fprintf(os.Stderr, err+"\n\n")
+	fmt.Fprint(os.Stderr, err+"\n\n")
 	fmt.Println(helpText(os.Args[0]))
 
 	os.Exit(1)

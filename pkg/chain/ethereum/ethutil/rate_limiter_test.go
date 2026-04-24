@@ -479,6 +479,15 @@ func (mec *mockEthereumClient) TransactionReceipt(
 	return nil, nil
 }
 
+func (mec *mockEthereumClient) SubscribeTransactionReceipts(
+	ctx context.Context,
+	q *ethereum.TransactionReceiptsQuery,
+	ch chan<- []*types.Receipt,
+) (ethereum.Subscription, error) {
+	mec.mockRequest()
+	return nil, nil
+}
+
 func (mec *mockEthereumClient) BalanceAt(
 	ctx context.Context,
 	account common.Address,
